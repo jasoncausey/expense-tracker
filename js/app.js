@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const expenseForm = document.getElementById('expense-form');
     const expenseAmountInput = document.getElementById('expense-amount');
     const expenseLabelInput = document.getElementById('expense-label');
+    const expenseDateInput = document.getElementById('expense-date');
+    const dateToggleBtn = document.getElementById('date-toggle-btn');
+    const dateInputContainer = document.getElementById('date-input-container');
     const quickLabelButtons = document.querySelectorAll('.quick-label-btn');
     const expenseList = document.getElementById('expense-list');
     const totalExpensesDisplay = document.getElementById('total-expenses');
@@ -36,6 +39,23 @@ document.addEventListener('DOMContentLoaded', () => {
         showMainView(); // Ensure correct initial view
     }
 
+    // Initialize date toggle button
+    dateToggleBtn.addEventListener('click', () => {
+        if (dateInputContainer.style.display === 'none') {
+            dateInputContainer.style.display = 'block';
+            // Set default date to today
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            expenseDateInput.value = formattedDate;
+            dateToggleBtn.classList.add('active');
+            dateToggleBtn.setAttribute('aria-label', 'Hide date field');
+        } else {
+            dateInputContainer.style.display = 'none';
+            dateToggleBtn.classList.remove('active');
+            dateToggleBtn.setAttribute('aria-label', 'Set custom date');
+        }
+    });
+
     async function addExpense(event) {
         event.preventDefault();
         try {
@@ -47,10 +67,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Get the date - either from the date input if visible or current date
+            let expenseDate;
+            if (dateInputContainer.style.display !== 'none' && expenseDateInput.value) {
+                // Parse the date input value which is in YYYY-MM-DD format
+                const [year, month, day] = expenseDateInput.value.split('-').map(Number);
+                // Create date using local time (months are 0-indexed in JavaScript Date)
+                const selectedDate = new Date(year, month - 1, day);
+                const now = new Date();
+                // Set the time portion to current time
+                selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+                expenseDate = selectedDate;
+            } else {
+                expenseDate = new Date();
+            }
+
             const newExpense = {
                 amount: amount,
                 label: label,
-                timestamp: new Date().toISOString()
+                timestamp: expenseDate.toISOString(),
+                customDate: dateInputContainer.style.display !== 'none' // Flag to indicate if a custom date was used
             };
 
             const id = await addExpenseToDB(newExpense);
@@ -58,6 +94,14 @@ document.addEventListener('DOMContentLoaded', () => {
             renderExpense(newExpense);
             updateTotalExpenses();
             expenseForm.reset();
+            
+            // Reset date input container if it was visible
+            if (dateInputContainer.style.display !== 'none') {
+                dateInputContainer.style.display = 'none';
+                dateToggleBtn.classList.remove('active');
+                dateToggleBtn.setAttribute('aria-label', 'Set custom date');
+            }
+            
             expenseLabelInput.focus(); // Keep focus on label for faster next entry
         } catch (error) {
             console.error('Failed to add expense:', error);
@@ -68,8 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderExpense(expense) {
         const listItem = document.createElement('li');
         listItem.setAttribute('data-id', expense.id);
+        
+        // Format the date
+        const expenseDate = new Date(expense.timestamp);
+        const formattedDate = expenseDate.toLocaleDateString();
+        
         listItem.innerHTML = `
-            <span class="expense-item-label">${expense.label}</span>
+            <div class="expense-item-details">
+                <span class="expense-item-label">${expense.label}</span>
+                <span class="expense-item-date">${formattedDate}</span>
+            </div>
             <span class="expense-item-amount">$${expense.amount.toFixed(2)}</span>
             <button class="delete-expense-btn">Delete</button>
         `;
@@ -133,11 +185,34 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalAmount = 0;
         const reportItems = [];
 
-        expenses.sort((a, b) => a.label.localeCompare(b.label)); // Sort by label for the report
+        // First sort by date, then by label
+        expenses.sort((a, b) => {
+            const dateA = new Date(a.timestamp);
+            const dateB = new Date(b.timestamp);
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateA - dateB; // Sort by date first
+            }
+            return a.label.localeCompare(b.label); // Then by label
+        });
 
         expenses.forEach(expense => {
-            reportItems.push({ label: expense.label, amount: expense.amount });
-            reportHTML += `<li><span>${expense.label}</span><span>$${expense.amount.toFixed(2)}</span></li>`;
+            const expenseDate = new Date(expense.timestamp);
+            const formattedDate = expenseDate.toLocaleDateString();
+            
+            reportItems.push({ 
+                label: expense.label, 
+                amount: expense.amount,
+                date: expense.timestamp
+            });
+            
+            reportHTML += `<li>
+                <div>
+                    <span>${expense.label}</span>
+                    <small>${formattedDate}</small>
+                </div>
+                <span>$${expense.amount.toFixed(2)}</span>
+            </li>`;
+            
             totalAmount += expense.amount;
         });
 
@@ -208,8 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         h3 { text-align: center; color: #003366; }
                         ul { list-style: none; padding: 0; }
                         li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
-                        li span:first-child { flex-grow: 1; }
+                        li div { display: flex; flex-direction: column; flex-grow: 1; }
                         li span:last-child { text-align: right; }
+                        li small { font-size: 0.8rem; color: #666; margin-top: 0.2rem; }
                         #invoice-total { text-align: right; font-weight: bold; margin-top: 20px; font-size: 1.2em; color: #003366; }
                     </style>
                 </head>
@@ -275,7 +351,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let reportHTML = `<h3>Stored Report - ${new Date(invoice.closedDate).toLocaleDateString()}</h3><ul>`;
         invoice.items.forEach(item => {
-            reportHTML += `<li><span>${item.label}</span><span>$${item.amount.toFixed(2)}</span></li>`;
+            // Check if the item has a date property
+            let dateDisplay = '';
+            if (item.date) {
+                const itemDate = new Date(item.date);
+                dateDisplay = `<small>${itemDate.toLocaleDateString()}</small>`;
+            }
+            
+            reportHTML += `<li>
+                <div>
+                    <span>${item.label}</span>
+                    ${dateDisplay}
+                </div>
+                <span>$${item.amount.toFixed(2)}</span>
+            </li>`;
         });
         reportHTML += `</ul><div id="invoice-total">Total: $${invoice.totalAmount.toFixed(2)}</div>`;
         viewInvoiceContent.innerHTML = reportHTML;

@@ -80,12 +80,48 @@ h2 {
 }
 
 .form-group input[type="text"],
-.form-group input[type="number"] {
+.form-group input[type="number"],
+.form-group input[type="date"] {
     width: calc(100% - 22px); /* Account for padding and border */
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
+}
+
+/* Input with icon styling */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon input {
+    flex-grow: 1;
+}
+
+.icon-btn-inline {
+    background: none;
+    border: none;
+    color: #0056b3;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    position: absolute;
+    right: 5px;
+}
+
+.icon-btn-inline:hover {
+    background-color: rgba(0, 86, 179, 0.1);
+}
+
+.icon-btn-inline.active {
+    background-color: rgba(0, 86, 179, 0.2);
+    color: #004494;
 }
 
 .form-group input[type="number"] {
@@ -169,9 +205,21 @@ h2 {
     border-bottom: none;
 }
 
-.expense-item-label {
+.expense-item-details {
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
+}
+
+.expense-item-label {
     color: #333;
+    font-weight: 500;
+}
+
+.expense-item-date {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.2rem;
 }
 
 .expense-item-amount {
@@ -229,15 +277,27 @@ h2 {
     padding: 0;
 }
 
-#invoice-content li {
+#invoice-content li, #view-invoice-content li {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 0;
     border-bottom: 1px dashed #ddd;
 }
 
-#invoice-content li:last-child {
+#invoice-content li:last-child, #view-invoice-content li:last-child {
     border-bottom: none;
+}
+
+#invoice-content li div, #view-invoice-content li div {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+#invoice-content li small, #view-invoice-content li small {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.2rem;
 }
 
 #invoice-total {
