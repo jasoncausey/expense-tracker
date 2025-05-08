@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const backToMainBtnViewStored = document.getElementById('back-to-main-from-view-invoice-btn'); // In view stored invoice section
     const printGeneratedInvoiceBtn = document.getElementById('print-invoice-btn'); // In generated invoice section
     const printHistoricalInvoiceBtn = document.getElementById('print-historical-invoice-btn'); // In view stored invoice section
+    
+    // Settings elements
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsSection = document.getElementById('settings-section');
+    const backToMainFromSettingsBtn = document.getElementById('back-to-main-from-settings-btn');
+    const deleteAllDataBtn = document.getElementById('delete-all-data-btn');
 
 
     async function initApp() {
@@ -187,8 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function printReport(contentHTMLToPrint) { // Added contentHTMLToPrint parameter
-        // This function is now generic, specific buttons will call it with the correct content
+    function printReport(contentHTMLToPrint) {
+        // This function is generic, specific buttons will call it with the correct content
         const printContents = contentHTMLToPrint;
         const originalContents = document.body.innerHTML;
         const popupWin = window.open('', '_blank', 'top=0,left=0,height=100%,width=auto');
@@ -234,6 +240,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         invoiceSection.classList.add('hidden'); // Hide generated report view
         viewInvoiceSection.classList.add('hidden'); // Hide stored report view
+        settingsSection.classList.add('hidden'); // Hide settings view
+    }
+    
+    function showSettingsView() {
+        settingsSection.classList.remove('hidden');
+        
+        addExpenseSection.classList.add('hidden');
+        currentExpensesSection.classList.add('hidden');
+        historicalInvoicesSection.classList.add('hidden');
+        closePeriodBtn.classList.add('hidden');
+        invoiceSection.classList.add('hidden');
+        viewInvoiceSection.classList.add('hidden');
     }
 
     function showGeneratedInvoiceView() { // For the freshly generated report
@@ -345,6 +363,46 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error during close period process:', error);
             alert('An error occurred while closing the period.');
         }
+    }
+
+    async function handleDeleteAllData() {
+        if (!confirm('Are you sure you want to delete ALL data? This will remove all expenses and reports. This action cannot be undone.')) {
+            return;
+        }
+        
+        // Double confirmation for destructive action
+        if (!confirm('FINAL WARNING: All your expense data and reports will be permanently deleted. Continue?')) {
+            return;
+        }
+        
+        try {
+            const success = await clearAllData();
+            if (success) {
+                alert('All data has been successfully deleted.');
+                // Refresh the UI
+                loadExpenses();
+                loadHistoricalInvoices();
+                showMainView();
+            } else {
+                alert('There was an error deleting the data. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error deleting all data:', error);
+            alert('An error occurred while deleting data: ' + error.message);
+        }
+    }
+    
+    // Add event listeners for settings
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', showSettingsView);
+    }
+    
+    if (backToMainFromSettingsBtn) {
+        backToMainFromSettingsBtn.addEventListener('click', showMainView);
+    }
+    
+    if (deleteAllDataBtn) {
+        deleteAllDataBtn.addEventListener('click', handleDeleteAllData);
     }
 
     initApp();

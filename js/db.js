@@ -117,6 +117,37 @@ async function clearAllExpensesFromDB() {
     });
 }
 
+async function clearAllInvoicesFromDB() {
+    const dbInstance = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = dbInstance.transaction([INVOICE_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(INVOICE_STORE_NAME);
+        const request = store.clear();
+
+        request.onsuccess = () => {
+            console.log('All invoices cleared from DB.');
+            resolve();
+        };
+
+        request.onerror = (event) => {
+            console.error('Error clearing invoices from DB:', event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+async function clearAllData() {
+    try {
+        await clearAllExpensesFromDB();
+        await clearAllInvoicesFromDB();
+        console.log('All data cleared successfully.');
+        return true;
+    } catch (error) {
+        console.error('Error clearing all data:', error);
+        return false;
+    }
+}
+
 // Ensure DB is opened when the script loads
 openDB().catch(err => console.error("Failed to open DB on initial load:", err));
 
