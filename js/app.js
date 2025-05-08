@@ -91,8 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const id = await addExpenseToDB(newExpense);
             newExpense.id = id; // Add the returned ID to the object for UI manipulation
-            renderExpense(newExpense);
-            updateTotalExpenses();
+            
+            // Reload all expenses to ensure proper sorting
+            loadExpenses();
             expenseForm.reset();
             
             // Reset date input container if it was visible
@@ -136,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const expenses = await getAllExpensesFromDB();
             expenseList.innerHTML = ''; // Clear existing list
-            expenses.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Show newest first
+            expenses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // Show oldest first
             expenses.forEach(expense => renderExpense(expense));
             updateTotalExpenses();
         } catch (error) {
