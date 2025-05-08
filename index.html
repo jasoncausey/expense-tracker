@@ -97,6 +97,18 @@
         <section id="settings-section" class="hidden">
             <h2>Settings</h2>
             <div class="settings-option">
+                <h3>Export/Import Data</h3>
+                <p>Export your data as a CSV file or import data from a CSV file.</p>
+                <div class="settings-buttons-row">
+                    <button id="export-csv-btn" class="btn-secondary">Export as CSV</button>
+                    <div class="file-input-container">
+                        <label for="import-csv-input" class="btn-secondary" id="import-csv-label">Import from CSV</label>
+                        <input type="file" id="import-csv-input" accept=".csv" style="display: none;">
+                    </div>
+                </div>
+                <p class="settings-note">Note: Importing data will replace all current data.</p>
+            </div>
+            <div class="settings-option">
                 <h3>Data Management</h3>
                 <p>Delete all data to start fresh. This will remove all expenses and reports.</p>
                 <button id="delete-all-data-btn" class="btn-danger">Delete All Data</button>

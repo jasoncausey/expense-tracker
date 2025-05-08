@@ -187,3 +187,152 @@ async function getAllInvoicesFromDB() {
         };
     });
 }
+
+// Function to export all data as CSV
+async function exportDataAsCSV() {
+    try {
+        // Get all data from the database
+        const expenses = await getAllExpensesFromDB();
+        const invoices = await getAllInvoicesFromDB();
+        
+        // Convert expenses to CSV
+        let csvContent = "data:text/csv;charset=utf-8,";
+        
+        // Add expenses header
+        csvContent += "type,id,amount,label,timestamp,customDate\n";
+        
+        // Add expenses data
+        expenses.forEach(expense => {
+            csvContent += `expense,${expense.id},${expense.amount},"${expense.label.replace(/"/g, '""')}",${expense.timestamp},${expense.customDate || false}\n`;
+        });
+        
+        // Add invoices data with their items
+        invoices.forEach(invoice => {
+            // Add invoice header
+            csvContent += `invoice,${invoice.id},${invoice.totalAmount},"Invoice",${invoice.closedDate},false\n`;
+            
+            // Add invoice items
+            invoice.items.forEach(item => {
+                csvContent += `invoice_item,${invoice.id},${item.amount},"${item.label.replace(/"/g, '""')}",${item.date || invoice.closedDate},false\n`;
+            });
+        });
+        
+        // Create a download link and trigger download
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `expense-tracker-export-${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        return true;
+    } catch (error) {
+        console.error("Error exporting data:", error);
+        return false;
+    }
+}
+
+// Function to import data from CSV
+async function importDataFromCSV(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+            try {
+                const csvData = e.target.result;
+                const { expenses, invoices } = parseCSV(csvData);
+                
+                // Clear existing data
+                await clearAllData();
+                
+                // Import expenses
+                for (const expense of expenses) {
+                    await addExpenseToDB(expense);
+                }
+                
+                // Import invoices
+                for (const invoice of invoices) {
+                    await addInvoiceToDB(invoice);
+                }
+                
+                resolve(true);
+            } catch (error) {
+                console.error("Error importing data:", error);
+                reject(error);
+            }
+        };
+        
+        reader.onerror = (error) => {
+            reject(error);
+        };
+        
+        reader.readAsText(file);
+    });
+}
+
+// Function to parse CSV data
+function parseCSV(csvData) {
+    const lines = csvData.split("\n");
+    const expenses = [];
+    const invoices = {};
+    
+    // Skip header line
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        
+        const values = parseCSVLine(lines[i]);
+        if (values.length < 6) continue; // Skip invalid lines
+        
+        const [type, id, amount, label, timestamp, customDate] = values;
+        
+        if (type === "expense") {
+            expenses.push({
+                amount: parseFloat(amount),
+                label: label,
+                timestamp: timestamp,
+                customDate: customDate === "true"
+            });
+        } else if (type === "invoice") {
+            invoices[id] = {
+                closedDate: timestamp,
+                items: [],
+                totalAmount: parseFloat(amount)
+            };
+        } else if (type === "invoice_item") {
+            if (invoices[id]) {
+                invoices[id].items.push({
+                    amount: parseFloat(amount),
+                    label: label,
+                    date: timestamp
+                });
+            }
+        }
+    }
+    
+    return {
+        expenses,
+        invoices: Object.values(invoices)
+    };
+}
+
+// Helper function to parse CSV line correctly handling quoted values
+function parseCSVLine(line) {
+    const result = [];
+    let startPos = 0;
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        if (line[i] === '"') {
+            inQuotes = !inQuotes;
+        } else if (line[i] === ',' && !inQuotes) {
+            result.push(line.substring(startPos, i).replace(/^"|"$/g, '').replace(/""/g, '"'));
+            startPos = i + 1;
+        }
+    }
+    
+    // Add the last value
+    result.push(line.substring(startPos).replace(/^"|"$/g, '').replace(/""/g, '"'));
+    
+    return result;
+}

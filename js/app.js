@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsSection = document.getElementById('settings-section');
     const backToMainFromSettingsBtn = document.getElementById('back-to-main-from-settings-btn');
     const deleteAllDataBtn = document.getElementById('delete-all-data-btn');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    const importCsvInput = document.getElementById('import-csv-input');
 
 
     async function initApp() {
@@ -493,6 +495,56 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (deleteAllDataBtn) {
         deleteAllDataBtn.addEventListener('click', handleDeleteAllData);
+    }
+    
+    // Add event listeners for CSV export/import
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', async () => {
+            try {
+                const success = await exportDataAsCSV();
+                if (success) {
+                    alert('Data exported successfully!');
+                } else {
+                    alert('Failed to export data. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('An error occurred while exporting data: ' + error.message);
+            }
+        });
+    }
+    
+    if (importCsvInput) {
+        importCsvInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+                alert('Please select a CSV file.');
+                event.target.value = '';
+                return;
+            }
+            
+            if (!confirm('Importing data will replace all current data. Are you sure you want to continue?')) {
+                event.target.value = '';
+                return;
+            }
+            
+            try {
+                await importDataFromCSV(file);
+                alert('Data imported successfully!');
+                // Refresh the UI
+                loadExpenses();
+                loadHistoricalInvoices();
+                showMainView();
+            } catch (error) {
+                console.error('Error importing data:', error);
+                alert('An error occurred while importing data: ' + error.message);
+            }
+            
+            // Clear the file input
+            event.target.value = '';
+        });
     }
 
     initApp();

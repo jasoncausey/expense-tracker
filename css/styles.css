@@ -362,6 +362,28 @@ h2 {
     color: #555;
 }
 
+.settings-buttons-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.settings-note {
+    font-size: 0.85rem;
+    color: #dc3545;
+    font-style: italic;
+    margin-top: 0.5rem;
+}
+
+.file-input-container {
+    position: relative;
+}
+
+#import-csv-label {
+    display: inline-block;
+    cursor: pointer;
+}
+
 .btn-danger {
     background-color: #dc3545;
     color: white;
