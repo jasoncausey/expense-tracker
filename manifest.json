@@ -2,7 +2,7 @@
   "name": "Expense Tracker",
   "short_name": "Expenses",
   "description": "A simple progressive web app for tracking expenses.",
-  "start_url": "/index.html",
+  "start_url": "expense-tracker/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#003366",
