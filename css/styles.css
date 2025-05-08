@@ -1,0 +1,297 @@
+/* General Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+}
+
+header {
+    background-color: #003366; /* Dark Navy Blue */
+    color: #ffffff;
+    padding: 1rem 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+main {
+    padding: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+section {
+    background-color: #ffffff;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+h2 {
+    color: #003366;
+    margin-top: 0;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"] {
+    width: calc(100% - 22px); /* Account for padding and border */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group input[type="number"] {
+    appearance: textfield; /* Remove spinners for number input */
+    -moz-appearance: textfield; /* Firefox */
+}
+
+#quick-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.quick-label-btn {
+    background-color: #e7f3ff; /* Light Blue */
+    color: #0056b3; /* Darker Blue */
+    border: 1px solid #b3d7ff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+
+.quick-label-btn:hover {
+    background-color: #cce5ff;
+}
+
+/* Button Styles */
+.btn-primary, .btn-secondary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #0056b3; /* Medium Blue */
+    color: white;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.btn-primary:hover {
+    background-color: #004494; /* Darker Blue */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+    background-color: #6c757d; /* Gray */
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268; /* Darker Gray */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Expense List Styles */
+#expense-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#expense-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+#expense-list li:last-child {
+    border-bottom: none;
+}
+
+.expense-item-label {
+    flex-grow: 1;
+    color: #333;
+}
+
+.expense-item-amount {
+    font-weight: bold;
+    color: #0056b3; /* Medium Blue */
+    margin-left: 1rem;
+}
+
+.delete-expense-btn {
+    background-color: #ff4d4d; /* Red */
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-left: 1rem;
+}
+
+.delete-expense-btn:hover {
+    background-color: #cc0000; /* Darker Red */
+}
+
+#total-expenses-container {
+    text-align: right;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid #003366; /* Dark Navy Blue */
+    font-size: 1.2rem;
+}
+
+#total-expenses-container strong {
+    color: #003366; /* Dark Navy Blue */
+}
+
+/* Invoice Section Styles */
+.hidden {
+    display: none !important;
+}
+
+#invoice-content {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f9f9f9;
+}
+
+#invoice-content h3 {
+    color: #003366;
+    margin-top: 0;
+}
+
+#invoice-content ul {
+    list-style: none;
+    padding: 0;
+}
+
+#invoice-content li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #ddd;
+}
+
+#invoice-content li:last-child {
+    border-bottom: none;
+}
+
+#invoice-total {
+    text-align: right;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    color: #003366;
+}
+
+/* Historical Invoices List Styles */
+#historical-invoices-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#historical-invoices-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    background-color: #f9f9f9;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+}
+
+#historical-invoices-list li span {
+    margin-right: 1rem;
+}
+
+.view-historical-invoice-btn.btn-small { /* More specific selector if needed */
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+/* Specific button styling if needed, e.g., for the moved close-period-btn */
+#current-expenses-section #close-period-btn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+
+/* Footer Styles */
+/* 
+footer { 
+    text-align: center;
+    margin-top: 2rem;
+    padding-bottom: 1rem; /* Ensure button is not cut off on mobile */
+/* } 
+*/
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    main {
+        padding: 0.5rem;
+    }
+
+    section {
+        padding: 1rem;
+    }
+
+    .btn-primary, .btn-secondary {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    #quick-labels {
+        gap: 0.3rem;
+    }
+
+    .quick-label-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}

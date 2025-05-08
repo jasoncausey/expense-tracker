@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#003366"/>
+    <title>Expense Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+</head>
+<body>
+    <header>
+        <h1>Expense Tracker</h1>
+    </header>
+    <main>
+        <section id="add-expense-section">
+            <h2>Add New Expense</h2>
+            <form id="expense-form">
+                <div class="form-group">
+                    <label for="expense-amount">Amount:</label>
+                    <input type="number" id="expense-amount" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="expense-label">Label:</label>
+                    <input type="text" id="expense-label" placeholder="e.g., Groceries, Rent" required>
+                </div>
+                <div class="form-group" id="quick-labels">
+                    <button type="button" class="quick-label-btn" data-label="Groceries">Groceries</button>
+                    <button type="button" class="quick-label-btn" data-label="Pharmacy">Pharmacy</button>
+                    <button type="button" class="quick-label-btn" data-label="Phone">Phone</button>
+                    <button type="button" class="quick-label-btn" data-label="Cable">Cable</button>
+                    <button type="button" class="quick-label-btn" data-label="Supplies">Supplies</button>
+                </div>
+                <button type="submit" class="btn-primary">Add Expense</button>
+            </form>
+        </section>
+
+        <section id="current-expenses-section">
+            <h2>Current Expenses</h2>
+            <ul id="expense-list">
+                <!-- Expenses will be listed here -->
+            </ul>
+            <div id="total-expenses-container">
+                <strong>Total: <span id="total-expenses">0.00</span></strong>
+            </div>
+            <button id="close-period-btn" class="btn-secondary" style="width: 100%; margin-top: 1rem;">Close Period & Generate Report</button>
+        </section>
+
+        <section id="invoice-section" class="hidden">
+            <h2>Expense Report</h2>
+            <div id="invoice-content">
+                <!-- Invoice details will be shown here -->
+            </div>
+            <button id="print-invoice-btn" class="btn-secondary">Print Report</button>
+            <button id="back-to-main-btn" class="btn-secondary" style="margin-top: 10px;">Back to Main View</button>
+        </section>
+
+        <section id="historical-invoices-section"> <!-- Made visible as part of main view -->
+            <h2>Historical Reports</h2>
+            <ul id="historical-invoices-list">
+                <!-- Historical invoices will be listed here -->
+            </ul>
+            <!-- Removed back-to-main-from-history-list-btn as this section is part of main view -->
+        </section>
+
+        <section id="view-invoice-section" class="hidden">
+            <h2>View Stored Report</h2>
+            <div id="view-invoice-content">
+                <!-- Content of a selected historical invoice -->
+            </div>
+            <button id="print-historical-invoice-btn" class="btn-secondary">Print This Report</button>
+            <button id="back-to-main-from-view-invoice-btn" class="btn-secondary" style="margin-top: 10px;">Back to Main View</button> <!-- Changed ID and text -->
+        </section>
+
+        <!-- Footer removed as its content is moved -->
+    </main>
+    <script src="js/db.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
