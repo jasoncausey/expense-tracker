@@ -12,8 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cameraContainer = document.getElementById('camera-container');
     const previewImage = document.getElementById('preview-image');
     const selectionBox = document.getElementById('selection-box');
-    const zoomInBtn = document.getElementById('zoom-in-btn');
-    const zoomOutBtn = document.getElementById('zoom-out-btn');
     const retryBtn = document.getElementById('retry-capture-btn');
     const detectedAmounts = document.getElementById('detected-amounts');
     const noAmountsMessage = document.getElementById('no-amounts-message');
@@ -22,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // State variables
     let stream = null;
     let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     let currentImage = null;
     
     // Add iOS class to body if on iOS device
@@ -29,14 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('ios-device');
     }
     
-    let imageScale = 1;
-    let imageTranslateX = 0;
-    let imageTranslateY = 0;
-    let isDragging = false;
-    let startX, startY;
-    let lastX, lastY;
-    let isSelecting = false;
-    let selectionStartX, selectionStartY;
+    // Selection state
+    let isSelectionMode = false;
+    let selectionStartX = 0;
+    let selectionStartY = 0;
     let ocrInProgress = false;
     let ocrTimeout = null;
 
@@ -68,6 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
         scannerOverlay.classList.add('hidden');
         stopCamera();
         resetScannerUI();
+        
+        // Ensure camera is fully stopped
+        if (stream) {
+            stream.getTracks().forEach(track => {
+                if (track.readyState === 'live') {
+                    track.stop();
+                }
+            });
+            stream = null;
+        }
     }
 
     // Start the camera
@@ -117,11 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Reset all state variables
         currentImage = null;
-        imageScale = 1;
-        imageTranslateX = 0;
-        imageTranslateY = 0;
-        isDragging = false;
-        isSelecting = false;
+        isSelectionMode = false;
         selectionBox.classList.add('hidden');
         detectedAmounts.innerHTML = '';
         noAmountsMessage.classList.add('hidden');
@@ -133,8 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ocrTimeout = null;
         }
         
-        // Restart the camera if not on iOS
-        if (!isIOS) {
+        // Only restart the camera if the scanner is still visible and not on iOS
+        if (!isIOS && !scannerOverlay.classList.contains('hidden')) {
             startCamera();
         }
     }
@@ -167,6 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show the preview container
         cameraContainer.classList.add('hidden');
         previewContainer.classList.remove('hidden');
+        
+        // Set instructions based on device type
+        const previewImageContainer = document.getElementById('preview-image-container');
+        previewImageContainer.setAttribute('data-instruction', 'Tap to select area');
         
         // Set the preview image
         previewImage.onload = () => {
@@ -421,139 +426,116 @@ document.addEventListener('DOMContentLoaded', () => {
         closeScanner();
     }
 
-    // Handle image zooming
-    function zoomImage(zoomIn) {
-        if (zoomIn) {
-            imageScale += 0.1;
-        } else {
-            imageScale = Math.max(0.5, imageScale - 0.1);
-        }
-        
-        updateImageTransform();
-        
-        // Schedule OCR after zooming
-        if (!isSelecting && !isDragging) {
-            scheduleOCR();
-        }
-    }
-
-    // Update the image transform based on scale and translation
-    function updateImageTransform() {
-        previewImage.style.transform = `scale(${imageScale}) translate(${imageTranslateX}px, ${imageTranslateY}px)`;
-    }
-
-    // Handle image dragging
-    function startDrag(e) {
-        if (isSelecting) return;
-        
-        isDragging = true;
-        startX = e.clientX || e.touches[0].clientX;
-        startY = e.clientY || e.touches[0].clientY;
-        lastX = imageTranslateX;
-        lastY = imageTranslateY;
-        
-        document.addEventListener('mousemove', dragImage);
-        document.addEventListener('touchmove', dragImage, { passive: false });
-        document.addEventListener('mouseup', stopDrag);
-        document.addEventListener('touchend', stopDrag);
-    }
-
-    function dragImage(e) {
-        if (!isDragging) return;
-        
+    // Handle image click/tap for selection
+    function handleImageClick(e) {
         e.preventDefault();
         
-        const clientX = e.clientX || e.touches[0].clientX;
-        const clientY = e.clientY || e.touches[0].clientY;
+        const rect = previewImage.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
         
-        imageTranslateX = lastX + (clientX - startX) / imageScale;
-        imageTranslateY = lastY + (clientY - startY) / imageScale;
-        
-        updateImageTransform();
-    }
-
-    function stopDrag() {
-        if (isDragging) {
-            isDragging = false;
-            document.removeEventListener('mousemove', dragImage);
-            document.removeEventListener('touchmove', dragImage);
-            document.removeEventListener('mouseup', stopDrag);
-            document.removeEventListener('touchend', stopDrag);
+        if (!isSelectionMode) {
+            // Start selection
+            isSelectionMode = true;
+            selectionStartX = x;
+            selectionStartY = y;
             
-            // Schedule OCR after dragging stops
-            scheduleOCR();
-        }
-    }
-
-    // Handle selection box
-    function startSelection(e) {
-        if (isDragging) return;
-        
-        isSelecting = true;
-        const rect = previewImage.getBoundingClientRect();
-        selectionStartX = (e.clientX || e.touches[0].clientX) - rect.left;
-        selectionStartY = (e.clientY || e.touches[0].clientY) - rect.top;
-        
-        selectionBox.style.left = `${selectionStartX}px`;
-        selectionBox.style.top = `${selectionStartY}px`;
-        selectionBox.style.width = '0';
-        selectionBox.style.height = '0';
-        selectionBox.classList.remove('hidden');
-        
-        document.addEventListener('mousemove', updateSelection);
-        document.addEventListener('touchmove', updateSelection, { passive: false });
-        document.addEventListener('mouseup', endSelection);
-        document.addEventListener('touchend', endSelection);
-    }
-
-    function updateSelection(e) {
-        if (!isSelecting) return;
-        
-        e.preventDefault();
-        
-        const rect = previewImage.getBoundingClientRect();
-        const currentX = (e.clientX || e.touches[0].clientX) - rect.left;
-        const currentY = (e.clientY || e.touches[0].clientY) - rect.top;
-        
-        const width = currentX - selectionStartX;
-        const height = currentY - selectionStartY;
-        
-        if (width > 0) {
-            selectionBox.style.left = `${selectionStartX}px`;
-            selectionBox.style.width = `${width}px`;
+            // Show selection box at initial point
+            selectionBox.style.left = `${x}px`;
+            selectionBox.style.top = `${y}px`;
+            selectionBox.style.width = '0';
+            selectionBox.style.height = '0';
+            selectionBox.classList.remove('hidden');
+            
+            // Update instruction
+            const previewImageContainer = document.getElementById('preview-image-container');
+            previewImageContainer.setAttribute('data-instruction', 'Tap again to complete selection');
         } else {
-            selectionBox.style.left = `${currentX}px`;
-            selectionBox.style.width = `${-width}px`;
-        }
-        
-        if (height > 0) {
-            selectionBox.style.top = `${selectionStartY}px`;
-            selectionBox.style.height = `${height}px`;
-        } else {
-            selectionBox.style.top = `${currentY}px`;
-            selectionBox.style.height = `${-height}px`;
-        }
-    }
-
-    function endSelection() {
-        if (isSelecting) {
-            isSelecting = false;
-            document.removeEventListener('mousemove', updateSelection);
-            document.removeEventListener('touchmove', updateSelection);
-            document.removeEventListener('mouseup', endSelection);
-            document.removeEventListener('touchend', endSelection);
+            // Complete selection
+            isSelectionMode = false;
+            
+            // Calculate width and height
+            const width = x - selectionStartX;
+            const height = y - selectionStartY;
+            
+            // Handle negative dimensions (selection from right to left or bottom to top)
+            if (width < 0) {
+                selectionBox.style.left = `${x}px`;
+                selectionBox.style.width = `${-width}px`;
+            } else {
+                selectionBox.style.width = `${width}px`;
+            }
+            
+            if (height < 0) {
+                selectionBox.style.top = `${y}px`;
+                selectionBox.style.height = `${-height}px`;
+            } else {
+                selectionBox.style.height = `${height}px`;
+            }
             
             // Check if selection is too small
-            const width = parseInt(selectionBox.style.width);
-            const height = parseInt(selectionBox.style.height);
+            const finalWidth = parseInt(selectionBox.style.width);
+            const finalHeight = parseInt(selectionBox.style.height);
             
-            if (width < 10 || height < 10) {
+            if (finalWidth < 10 || finalHeight < 10) {
                 // Selection too small, hide the box
                 selectionBox.classList.add('hidden');
+                
+                // Reset instruction
+                const previewImageContainer = document.getElementById('preview-image-container');
+                previewImageContainer.setAttribute('data-instruction', 'Tap to select area');
             } else {
-                // Valid selection, perform OCR on the selected area
+                // Update instruction
+                const previewImageContainer = document.getElementById('preview-image-container');
+                previewImageContainer.setAttribute('data-instruction', 'Processing selected area');
+                
+                // Perform OCR on the selected area
                 scheduleOCR();
             }
+        }
+    }
+
+    // Handle image move during selection
+    function handleImageMove(e) {
+        if (!isSelectionMode) return;
+        
+        e.preventDefault();
+        
+        const rect = previewImage.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        
+        // Calculate width and height
+        const width = x - selectionStartX;
+        const height = y - selectionStartY;
+        
+        // Handle negative dimensions (selection from right to left or bottom to top)
+        if (width < 0) {
+            selectionBox.style.left = `${x}px`;
+            selectionBox.style.width = `${-width}px`;
+        } else {
+            selectionBox.style.left = `${selectionStartX}px`;
+            selectionBox.style.width = `${width}px`;
+        }
+        
+        if (height < 0) {
+            selectionBox.style.top = `${y}px`;
+            selectionBox.style.height = `${-height}px`;
+        } else {
+            selectionBox.style.top = `${selectionStartY}px`;
+            selectionBox.style.height = `${height}px`;
+        }
+    }
+
+    // Cancel selection
+    function cancelSelection() {
+        if (isSelectionMode) {
+            isSelectionMode = false;
+            selectionBox.classList.add('hidden');
+            
+            // Reset instruction
+            const previewImageContainer = document.getElementById('preview-image-container');
+            previewImageContainer.setAttribute('data-instruction', 'Tap to select area');
         }
     }
 
@@ -576,48 +558,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    zoomInBtn.addEventListener('click', () => zoomImage(true));
-    zoomOutBtn.addEventListener('click', () => zoomImage(false));
     retryBtn.addEventListener('click', resetScannerUI);
     
-    // Add touch/mouse events for image manipulation
-    previewImage.addEventListener('mousedown', (e) => {
-        if (e.button === 0) { // Left mouse button
-            if (e.shiftKey) {
-                startSelection(e);
-            } else {
-                startDrag(e);
-            }
-        }
+    // Add event listeners for selection
+    previewImage.addEventListener('mousedown', handleImageClick);
+    previewImage.addEventListener('touchstart', handleImageClick, { passive: false });
+    
+    previewImage.addEventListener('mousemove', handleImageMove);
+    previewImage.addEventListener('touchmove', handleImageMove, { passive: false });
+    
+    // Cancel selection on right-click or long press
+    previewImage.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        cancelSelection();
     });
     
-    previewImage.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-            startDrag(e);
+    // Add CSS animation for selection feedback
+    const style = document.createElement('style');
+    style.textContent = `
+        #selection-box {
+            position: absolute;
+            border: 2px dashed #0056b3;
+            background-color: rgba(0, 86, 179, 0.1);
+            pointer-events: none;
+            z-index: 10;
         }
-    });
-    
-    // Add double-tap to start selection on mobile
-    let lastTap = 0;
-    previewImage.addEventListener('touchend', (e) => {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTap;
-        if (tapLength < 300 && tapLength > 0) {
-            // Double tap detected
-            e.preventDefault();
-            if (!isSelecting && !selectionBox.classList.contains('hidden')) {
-                // If there's already a selection, clear it
-                selectionBox.classList.add('hidden');
-                scheduleOCR();
-            } else {
-                // Start a new selection
-                startSelection({
-                    touches: [{ clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY }]
-                });
-            }
+        
+        #preview-image-container::after {
+            content: attr(data-instruction);
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0.9;
+            transition: opacity 0.3s;
         }
-        lastTap = currentTime;
-    });
+    `;
+    document.head.appendChild(style);
 
     // Log when the script is loaded
     console.log('OCR script loaded. Tesseract status:', 
