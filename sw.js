@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-tracker-cache-v1';
+const CACHE_NAME = 'expense-tracker-cache-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -6,6 +6,7 @@ const urlsToCache = [
     '/css/styles.css',
     '/js/app.js',
     '/js/db.js',
+    '/js/ocr.js',
     '/icons/icon-72x72.png',
     '/icons/icon-96x96.png',
     '/icons/icon-128x128.png',
@@ -13,8 +14,9 @@ const urlsToCache = [
     '/icons/icon-152x152.png',
     '/icons/icon-192x192.png',
     '/icons/icon-384x384.png',
-    '/icons/icon-512x512.png'
-    // Add other static assets if any, e.g., specific font files
+    '/icons/icon-512x512.png',
+    'https://unpkg.com/ocrad.js@0.1.1/ocrad.js',
+    'https://unpkg.com/tesseract.js@2.1.5/dist/tesseract.min.js'
 ];
 
 // Install a service worker
