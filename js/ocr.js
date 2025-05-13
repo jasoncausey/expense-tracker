@@ -23,6 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let stream = null;
     let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     let currentImage = null;
+    
+    // Add iOS class to body if on iOS device
+    if (isIOS) {
+        document.body.classList.add('ios-device');
+    }
+    
     let imageScale = 1;
     let imageTranslateX = 0;
     let imageTranslateY = 0;
@@ -49,6 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isIOS) {
             // On iOS, we'll use the system camera
             captureBtn.textContent = 'Take Photo';
+            // Hide the upload text on iOS, showing only the icon
+            document.querySelector('.upload-text').style.display = 'none';
         } else {
             // On other platforms, we'll use the camera stream
             startCamera();

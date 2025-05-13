@@ -473,6 +473,29 @@ footer {
     overflow: hidden;
 }
 
+/* iOS-specific styling for camera container */
+.ios-device #camera-container {
+    background-color: #f4f7f6; /* Light gray background instead of black */
+    background-image: linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%, #e0e0e0), 
+                      linear-gradient(45deg, #e0e0e0 25%, transparent 25%, transparent 75%, #e0e0e0 75%, #e0e0e0);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ios-device #camera-container::before {
+    content: "Tap buttons below to take or upload a photo";
+    color: #555;
+    font-size: 1rem;
+    text-align: center;
+    padding: 0 20px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
 #camera-view {
     position: absolute;
     width: 100%;
@@ -494,9 +517,55 @@ footer {
     width: 100%;
     display: flex;
     justify-content: center;
+    align-items: center; /* Ensure vertical alignment */
     gap: 10px;
     padding: 0 20px;
     box-sizing: border-box;
+}
+
+/* Ensure buttons have the same height and vertical alignment */
+#capture-btn-container button {
+    height: 44px; /* Set a fixed height for both buttons */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0; /* Remove any default margins */
+    align-self: center; /* Ensure vertical alignment */
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+/* Style for the upload button with icon */
+#upload-image-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px; /* Space between icon and text */
+    padding: 0.75rem 1rem; /* Adjust padding to match the other button */
+}
+
+/* Hide upload text on small screens or iOS */
+@media (max-width: 480px), (-webkit-min-device-pixel-ratio: 2) {
+    .upload-text {
+        display: none;
+    }
+    
+    #upload-image-btn {
+        padding: 0.75rem; /* Adjust padding when text is hidden */
+    }
+}
+
+/* Fix for button alignment in the container */
+#capture-btn-container {
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Ensure vertical alignment */
+    gap: 10px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
 }
 
 #preview-container {
