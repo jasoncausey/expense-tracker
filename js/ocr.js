@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Perform OCR on the image
-    function performOCR(useHighAccuracy = false) {
+    async function performOCR(useHighAccuracy = false) {
         if (ocrInProgress) return;
         ocrInProgress = true;
         
@@ -254,52 +254,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show a more detailed loading message
                 loadingEl.textContent = 'Processing image (this may take a moment)...';
                 
-                // Configure Tesseract options based on accuracy level
-                const tesseractOptions = {
-                    lang: 'eng',
-                    logger: m => {
-                        console.log('Tesseract progress:', m);
-                        if (m.status === 'recognizing text') {
-                            loadingEl.textContent = `Processing: ${Math.round(m.progress * 100)}%`;
-                        }
+                // Configure logger for progress updates
+                const logger = m => {
+                    console.log('Tesseract progress:', m);
+                    if (m.status === 'recognizing text') {
+                        loadingEl.textContent = `Processing: ${Math.round(m.progress * 100)}%`;
                     }
                 };
                 
-                // Use higher quality settings for high accuracy mode
+                // Create a worker with the appropriate options
+                // In v6.0.1, the createWorker function takes language, OEM, and options
+                let worker;
+                try {
+                    worker = await window.Tesseract.createWorker('eng', useHighAccuracy ? 1 : 0, {
+                        logger,
+                        // Use higher quality settings for high accuracy mode
+                        ...(useHighAccuracy ? {
+                            engineMode: 1, // Tesseract only (more accurate)
+                        } : {})
+                    });
+                } catch (error) {
+                    console.error('Error creating Tesseract worker:', error);
+                    
+                    // Fallback to simpler worker creation if the above fails
+                    console.log('Trying fallback worker creation method...');
+                    worker = await window.Tesseract.createWorker({
+                        logger,
+                        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+                        lang: 'eng',
+                        oem: useHighAccuracy ? 1 : 0,
+                        ...(useHighAccuracy ? {
+                            engineMode: 1, // Tesseract only (more accurate)
+                        } : {})
+                    });
+                }
+                
                 if (useHighAccuracy) {
-                    tesseractOptions.engineMode = 1; // Tesseract only (more accurate)
                     loadingEl.textContent = 'Processing with high accuracy (this may take longer)...';
                 }
                 
-                window.Tesseract.recognize(
-                    canvas,
-                    'eng',
-                    tesseractOptions
-                )
-                .then(result => {
-                    console.log('Tesseract result:', result);
-                    if (result && result.data && result.data.text) {
-                        processOCRResult(result.data.text, useHighAccuracy, result.data.words || []);
-                    } else if (result && result.text) {
-                        processOCRResult(result.text, useHighAccuracy, result.words || []);
+                try {
+                    // Perform OCR using the worker
+                    const { data } = await worker.recognize(canvas);
+                    console.log('Tesseract result:', data);
+                    
+                    if (data && data.text) {
+                        processOCRResult(data.text, useHighAccuracy, data.words || []);
                     } else {
                         noAmountsMessage.classList.remove('hidden');
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Tesseract processing error:', error);
                     noAmountsMessage.classList.remove('hidden');
-                })
-                .finally(() => {
-                    document.getElementById('ocr-loading')?.remove();
-                    ocrInProgress = false;
-                });
+                } finally {
+                    // Always terminate the worker when done
+                    await worker.terminate();
+                }
             } else {
                 throw new Error('Tesseract not available globally');
             }
         } catch (error) {
             console.error('Error using Tesseract:', error);
             noAmountsMessage.classList.remove('hidden');
+        } finally {
             document.getElementById('ocr-loading')?.remove();
             ocrInProgress = false;
         }

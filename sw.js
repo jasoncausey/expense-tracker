@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-tracker-cache-v2';
+const CACHE_NAME = 'expense-tracker-cache-v3';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -15,8 +15,9 @@ const urlsToCache = [
     '/icons/icon-192x192.png',
     '/icons/icon-384x384.png',
     '/icons/icon-512x512.png',
-    'https://unpkg.com/ocrad.js@0.1.1/ocrad.js',
-    'https://unpkg.com/tesseract.js@2.1.5/dist/tesseract.min.js'
+    // Do not use unpkg.  Use jsdelivr
+    'https://cdn.jsdelivr.net/npm/ocrad.js@0.1.1/ocrad.js',
+    'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js'
 ];
 
 // Install a service worker
